@@ -7,6 +7,7 @@
 | Skill | Description |
 |---|---|
 | [litejs-testing](skills/litejs-testing/) | LiteJS test framework — assertions, mocking, data-driven tests, snapshots |
+| [litejs-release](skills/litejs-release/) | LiteJS release helper — version bumping, changelog, tagging, publishing |
 
 ## Install
 
