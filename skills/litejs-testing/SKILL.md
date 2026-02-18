@@ -1,6 +1,6 @@
 ---
 name: litejs-testing
-description: Use when writing, running, or debugging tests in LiteJS projects using test.js framework, lj test / lj t commands, or node -r ./test.js
+description: Use when writing, running, or debugging tests using LiteJS framework, lj test / lj t commands, or node -r @litejs/cli/test.js
 license: MIT
 ---
 
@@ -11,10 +11,11 @@ Zero-dependency test framework. ES5 compatible. Runs in Node.js and browsers.
 ## Running Tests
 
 ```sh
+npm i -g @litejs/cli
 lj test                    # run test/*.js (default glob)
 lj t                       # shorthand
 lj t test/foo.js           # specific file
-lj t 5                     # run only test case #5
+lj t test/foo.js 5         # run only test case #5 (file required)
 lj t --tap                 # TAP output
 lj t --brief               # failures only
 lj t --watch               # re-run on file change
@@ -23,7 +24,11 @@ lj t --seed=123            # deterministic Math.random
 lj t --timeout=5000        # default test timeout ms
 lj t --no-color            # disable ANSI colors
 lj t --tz=UTC              # set timezone
-node -r ./test.js test.js  # direct invocation
+
+# direct invocation without @litejs/cli globally installed
+node -r @litejs/cli/test.js test/foo.js
+# direct invocation only in @litejs/cli repo
+node -r ./test.js test/foo.js
 ```
 
 ## Test Structure
@@ -98,13 +103,16 @@ Available as second parameter when test function has 2+ args. Auto-restored afte
 ### mock.fn([behavior])
 
 ```js
-var spy = mock.fn()                     // returns undefined
-var wrap = mock.fn(originalFn)          // wraps, tracks calls
+var spy = mock.fn()                    // returns undefined
+var wrap = mock.fn(originalFn)         // wraps, tracks calls
 var cycle = mock.fn(["a", "b", "c"])   // cycles return values
-var map = mock.fn({"1": "one", "*": "default"})  // maps args
-var val = mock.fn(42)                   // always returns 42
-var async = mock.fn(originalFn, true)   // returns Promise
-var cb = mock.fn(originalFn, 0)         // calls args[0](err, result)
+var map = mock.fn({
+    '"1",2': 'fn called with one string and number',
+    '*': 'default'
+})  // maps serialized args to result
+var val = mock.fn(42)                  // always returns 42
+var async = mock.fn(originalFn, true)  // returns Promise
+var cb = mock.fn(originalFn, 0)        // calls args[0](err, result)
 
 spy.called    // call count
 spy.calls     // [{scope, args, error, result}, ...]
@@ -115,11 +123,11 @@ spy.results   // [returnVal, ...]
 ### mock.spy / mock.swap
 
 ```js
-mock.spy(obj, "method")              // wrap with spy
-mock.spy(obj, "method", stubFn)      // replace with spy
-mock.swap(obj, "key", newValue)      // replace value
+mock.spy(obj, "method")             // wrap with spy
+mock.spy(obj, "method", stubFn)     // replace with spy
+mock.swap(obj, "key", newValue)     // replace value
 mock.swap(obj, {a: 1, b: 2})        // replace multiple
-mock.restore()                       // manual restore (auto on end)
+mock.restore()                      // manual restore (auto on end)
 ```
 
 ### mock.time / mock.tick
@@ -127,11 +135,11 @@ mock.restore()                       // manual restore (auto on end)
 Replaces `Date`, `setTimeout`, `setInterval`, `setImmediate`, `clearTimeout`, `clearInterval`, `clearImmediate`, `process.nextTick`, `process.hrtime`.
 
 ```js
-mock.time()                          // freeze at current time
+mock.time()                         // freeze at current time
 mock.time("2024-01-15T10:30:00Z")   // freeze at specific time
-mock.time(1705312200000)             // freeze at epoch ms
-mock.tick(100)                       // advance 100ms, run timers
-mock.tick()                          // advance to next timer
+mock.time(1705312200000)            // freeze at epoch ms
+mock.tick(100)                      // advance 100ms, run timers
+mock.tick()                         // advance to next timer
 ```
 
 ### mock.rand
@@ -147,23 +155,31 @@ mock.rand(12345)   // specific seed
 Requires `require("../snapshot.js")` in test file.
 
 ```js
-assert.matchSnapshot("file.js", actual)       // compare to file.snap.js
-assert.matchSnapshot("file.js", transformFn)  // transformFn(fileContents)
+assert.matchSnapshot("file.js", actual)      // compare to file.snap.js
+assert.matchSnapshot("file.js", transformFn) // transformFn(fileContents)
 assert.cmdSnapshot("lj build f.js", "f.js")  // run cmd, compare stdout
 assert.cmdSnapshot("cmd", "f.js", { expectFail: true })  // non-zero exit ok
 ```
 
 Update all snapshots: `lj t --up`
 
-## Utilities on `describe`
+## Browser Testing
 
-```js
-describe.equal(a, b)           // standalone deep equal -> boolean
-describe.type(value)           // -> "string","number","array","object","null","nan",...
-describe.stringify(value, max) // custom stringifier
-describe.diff(a, b, sep)      // diff two strings
-describe.format(str, obj)     // "{key}" template substitution
-describe.opts(argv, defaults)  // parse --flag=value args
-describe.conf                  // live config object
-describe.print(str)            // output a line
+Create an HTML file that loads test.js runner and test files via script tags:
+
+```html
+<pre id=pre></pre>
+<script src="test.js"></script>
+<script>
+describe.onend = function() {
+	pre.innerText = describe.output
+}
+// Specify `env` if want to use in tests
+describe.env = "browser"
+// describe("shim.js {0}", describe.env === "browser" ? [["mock", window._shim], ["native", window]] : [["mock", require("../shim.js")]], (name, env) => {})
+</script>
+<script src="test-spec.js"></script>
 ```
+
+Output is collected in `describe.output` and rendered in `onend` callback.
+
