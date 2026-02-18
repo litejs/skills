@@ -9,6 +9,7 @@
 | [litejs-ui](skills/litejs-ui/) | LiteJS UI engine — templates, views, bindings, events, i18n, El API |
 | [litejs-testing](skills/litejs-testing/) | LiteJS test framework — assertions, mocking, data-driven tests, snapshots |
 | [litejs-release](skills/litejs-release/) | LiteJS release helper — version bumping, changelog, tagging, publishing |
+| [litejs-style](skills/litejs-style/) | LiteJS style guide — JS, CSS, and commit conventions |
 
 ## Install
 

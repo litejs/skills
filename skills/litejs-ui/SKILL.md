@@ -7,6 +7,8 @@ description: Use when building UI with LiteJS framework — writing .ui template
 
 Dependency-free ES5 UI engine (~25kB). Templates, routing, data binding, i18n, touch gestures — no transpiling/bundling.
 
+Although written in ES5, LiteJS works seamlessly in ESM projects — just include the scripts and start building.
+
 ## Template Syntax (.ui files)
 
 Indentation-based hierarchy using CSS selectors. Indent = child, dedent = sibling.
@@ -108,16 +110,20 @@ Event handlers can be strings (emitted on View) or function references.
 ### Initialization
 
 ```javascript
-var View = LiteJS({
-    breakpoints: "sm,601=md,1025=lg",
-    home: "home",
-    root: document.body,
-    locales: { en: "en" },
-    globals: { /* default translations */ }
-})
+var app = LiteJS()
 ```
 
-Returns `View` constructor. Assigns `View` to scope as `$ui`.
+Options only needed when changing defaults:
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `home` | `"home"` | Default view name |
+| `root` | `document.body` | Root element for views |
+| `breakpoints` | — | Responsive breakpoints, e.g. `"sm,601=md,1025=lg"` |
+| `locales` | — | Locale definitions, e.g. `{en: "en"}` |
+| `globals` | — | Default translations |
+
+Returns View constructor. Available as `$ui` in templates, use chosen variable name (`app`) in plain JavaScript.
 
 ### Defining Views
 
@@ -138,16 +144,15 @@ p User {params.userId}
 
 In JavaScript:
 ```javascript
-View(route, element, parentRoute)
-View.def("route file.js,file.css\nuser/{id} user.js")
-View.show("home")
-View.get(url, params)
-View.param(["user"], function(value, name, params) { /* resolve */ })
+app.def("route file.js,file.css\nuser/{id} user.js")
+app.show("home")
+app.get(url, params)
+app.param(["user"], function(value, name, view, params) { /* resolve */ })
 ```
 
 ### View Lifecycle
 
-Navigation: `View.show(url)` → route match → `ping` (each view, async-friendly with `this.wait()`) → render → `open` → `show`.
+Navigation: `app.show(url)` → route match → `ping` (each view, async-friendly with `this.wait()`) → render → `open` → `show`.
 
 | Event | When |
 |-------|------|
@@ -165,7 +170,7 @@ Navigation: `View.show(url)` → route match → `ping` (each view, async-friend
 |----------|----------|
 | `$s` | Current scope |
 | `$el` | Current element |
-| `$ui` | View router (= View object) |
+| `$ui` | View router (in templates; use chosen var name in plain JS) |
 | `$d` | Global scope |
 | `$up` | Parent scope |
 | `$i` | Loop index (inside `;each`) |
@@ -245,11 +250,12 @@ El.addKb({
 El.rmKb(map)
 ```
 
-In templates (preferred — automatically added/removed when the view opens/closes):
+In templates (preferred — automatically added/removed when the view opens/closes).
+String values navigate to the view, function values are called directly:
 
 ```
 %view home #public
-    @kb {h: goHome, "ctrl+s": save}
+    @kb {h: "home", u: "users", "ctrl+s": save}
 ```
 
 `El.addKb`/`El.rmKb` can be used directly in JavaScript but requires manual cleanup. The template version is preferred as it binds to the view lifecycle.

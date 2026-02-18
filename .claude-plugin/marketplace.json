@@ -29,6 +29,14 @@
       "skills": [
         "./skills/litejs-release"
       ]
+    },
+    {
+      "name": "litejs-style",
+      "description": "LiteJS style guide — JS, CSS, and commit conventions",
+      "source": "./",
+      "skills": [
+        "./skills/litejs-style"
+      ]
     }
   ]
 }
