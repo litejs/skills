@@ -1,0 +1,18 @@
+{
+  "name": "litejs-skills",
+  "description": "Claude Code skills for LiteJS projects",
+  "owner": {
+    "name": "Lauri Rooden",
+    "email": "lauri@rooden.ee"
+  },
+  "plugins": [
+    {
+      "name": "litejs-testing",
+      "description": "LiteJS test framework — assertions, mocking, data-driven tests, snapshots",
+      "source": "./",
+      "skills": [
+        "./skills/litejs-testing"
+      ]
+    }
+  ]
+}
