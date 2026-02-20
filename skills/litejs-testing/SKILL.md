@@ -168,18 +168,82 @@ Update all snapshots: `lj t --up`
 Create an HTML file that loads test.js runner and test files via script tags:
 
 ```html
-<pre id=pre></pre>
+<pre id=out></pre>
+<script src="litejs-full.js"></script>
 <script src="test.js"></script>
+<script src="ui-test.js"></script>
 <script>
 describe.onend = function() {
-	pre.innerText = describe.output
+	out.textContent = describe.output
 }
-// Specify `env` if want to use in tests
-describe.env = "browser"
-// describe("shim.js {0}", describe.env === "browser" ? [["mock", window._shim], ["native", window]] : [["mock", require("../shim.js")]], (name, env) => {})
 </script>
-<script src="test-spec.js"></script>
+<script src="my-tests.js"></script>
 ```
 
 Output is collected in `describe.output` and rendered in `onend` callback.
+
+Run headless:
+
+```sh
+chromium --headless --virtual-time-budget=3000 \
+  --enable-logging=stderr http://localhost:8080/test/ 2>&1 \
+  | sed -n '/INFO:CONSOLE/s,.*"\(.*\)".*,\1,p'
+```
+
+### UI Test Assertions (ui-test.js)
+
+`ui-test.js` extends the test framework with browser assertions for LiteJS UI apps.
+All methods are chainable and poll the DOM until conditions are met or timeout is reached.
+
+**Navigation:**
+
+- `assert.open(url[, replace])` — Navigate via `LiteJS.go()`.
+- `assert.waitView(route[, options])` — Poll until `LiteJS.ui.route` matches.
+- `assert.waitSelector(sel[, options])` — Poll until selector is in DOM.
+
+**DOM Assertions:**
+
+- `assert.hasText(sel, expected[, options])` — Poll until element text matches.
+- `assert.hasElements(sel, expected[, options])` — Poll until element count matches.
+- `assert.fill(sel, value[, options])` — Set input value.
+- `assert.click(sel[, options])` — Poll until element found, then dispatch click.
+
+**Async Control:**
+
+- `assert.wait()` — Queue subsequent calls. Returns `resume` function.
+- `assert.waitFor(fn[, options])` — Poll `fn` every 50ms until truthy.
+
+**Layout:**
+
+- `assert.resizeTo(width, height)` — Resize viewport and emit resize event.
+- `assert.isVisible(el)` — Assert element has non-zero dimensions.
+
+**Coverage:**
+
+- `assert.collectCssUsage([options])` — Track CSS selector matches on view show.
+- `assert.assertCssUsage()` — Assert all collected selectors had matches.
+- `assert.collectViewsUsage()` — Track view show events.
+- `assert.assertViewsUsage()` — Assert all defined views were shown.
+
+**Example:**
+
+```js
+describe("app", function() {
+	it("should render home", function(assert) {
+		assert
+		.open("")
+		.waitView("home")
+		.hasText("h2", "Welcome")
+		.end()
+	})
+	it("should navigate", function(assert) {
+		assert
+		.click('a[href="#about"]')
+		.waitView("about")
+		.hasText("h2", "About")
+		.hasElements("ul > li", 3)
+		.end()
+	})
+})
+```
 
