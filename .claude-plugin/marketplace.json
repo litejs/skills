@@ -37,6 +37,14 @@
       "skills": [
         "./skills/litejs-style"
       ]
+    },
+    {
+      "name": "litejs-build",
+      "description": "LiteJS build system — HTML attributes (cat, min, drop, inline), asset handling, build phases",
+      "source": "./",
+      "skills": [
+        "./skills/litejs-build"
+      ]
     }
   ]
 }
