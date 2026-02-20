@@ -182,13 +182,16 @@ describe.onend = function() {
 
 Output is collected in `describe.output` and rendered in `onend` callback.
 
-Run headless:
+Run with `lj ui-test`:
 
 ```sh
-chromium --headless --virtual-time-budget=3000 \
-  --enable-logging=stderr http://localhost:8080/test/ 2>&1 \
-  | sed -n '/INFO:CONSOLE/s,.*"\(.*\)".*,\1,p'
+lj ui-test                          # default: test/index.html on :8091
+lj ui-test my-page.html             # custom URL path
+lj ui-test --port=3000 --budget=10000  # custom port and timeout
 ```
+
+Starts a local server, finds Chrome/Chromium, runs headless, exits 0/1.
+Port auto-increments if in use.
 
 ### UI Test Assertions (ui-test.js)
 
@@ -221,8 +224,10 @@ All methods are chainable and poll the DOM until conditions are met or timeout i
 **Coverage:**
 
 - `assert.collectCssUsage([options])` — Track CSS selector matches on view show.
-- `assert.assertCssUsage()` — Assert all collected selectors had matches.
+- `describe.unusedCss()` — Return array of unused selectors (for build tools).
+- `assert.assertCssUsage()` — Assert no unused selectors remain.
 - `assert.collectViewsUsage()` — Track view show events.
+- `describe.unusedViews()` — Return array of unused view routes (for build tools).
 - `assert.assertViewsUsage()` — Assert all defined views were shown.
 
 **Example:**
