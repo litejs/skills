@@ -23,8 +23,9 @@ lj b                                   # uses package.json#litejs/build
 | `--banner` | `""` | Add commented banner to output |
 | `--cat` | `true` | Build src files |
 | `--fetch` | `true` | Fetch remote resources |
+| `--jsmin` | `""` | JS minification command (default: uglifyjs). Custom commands read stdin without `--` |
 | `--min` | `""` | Minified output file |
-| `--out` | `""` | Output file |
+| `--out` | `""` | Output file. For JS/UI output: only indent/remove empty lines. `--min` fully minimizes |
 | `--readme` | `""` | Replace readme tags in file |
 | `--ver` | `""` | Override version string |
 | `--worker` | `""` | Update worker file |
@@ -182,6 +183,48 @@ build.drop(el, content, attr)
 build.defMap(str)
 build.cssMin(str, urlFn)
 build.parseView(content, extTo, lastMinEl, urlFn)
+```
+
+## JS/UI Build (non-HTML)
+
+Build directly to `.js` or `.ui` output without an HTML file:
+
+```sh
+# Build JS bundle from mixed inputs (.js, .css, .ui/.view files)
+lj b --min=app.min.js src/app.js src/style.css src/views.ui
+
+# Build .ui output (unminified JS/CSS, indented sections)
+lj b --out=app.ui src/app.js src/style.css src/views.ui
+
+# Build .ui output (minified JS/CSS/UI)
+lj b --min=app.min.ui src/app.js src/style.css src/views.ui
+```
+
+Input file transforms:
+- `.ui`/`.view` → split into `%css`/`%js`/template sections (JS output: `xhr.css()`/`xhr.ui()` calls)
+- `.css` → JS output: wrapped in `xhr.css()`, UI output: `%css` section
+- `.js` → JS output: concatenated, UI output: `%js` section
+
+Consecutive `xhr.css()` calls are merged in JS output.
+
+### Custom JS minifier
+
+```sh
+# Use esbuild instead of uglifyjs
+lj b --jsmin="esbuild --minify --loader=js" --min=app.min.js app.js
+
+# Use terser
+lj b --jsmin="terser -c -m" --min=app.min.js app.js
+```
+
+Can be set in `.github/litejs.json`:
+
+```json
+{
+  "build": {
+    "jsmin": "esbuild --minify --loader=js"
+  }
+}
 ```
 
 ## Common Patterns
