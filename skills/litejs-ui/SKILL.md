@@ -105,6 +105,37 @@ Bindings connect data to DOM. Suffix `!` = execute once, don't update.
 
 Event handlers can be strings (emitted on View) or function references.
 
+**Important:** Outside of `%view` blocks, `@click handler` resolves `handler` from the scope chain. Since the scope is `$d` (global scope), the handler function must be on `$d`:
+
+```javascript
+%js
+    // WRONG — function declaration not accessible from template scope
+    function doSomething() { ... }
+
+    // RIGHT — attach to $d so template bindings can find it
+    $d.doSomething = function() { ... }
+```
+
+## `;val` Binding Details
+
+`;val` is designed for **form-level** two-way binding. Put `;val data` on a `form` element and use `name` attributes on inputs:
+
+```
+form
+    ;val data
+    input[name=email][type=email]
+    textarea[name=notes][rows=4]
+```
+
+This syncs form values into `$d.data = {email: "...", notes: "..."}`.
+
+**Gotcha:** Using `;val field` on a standalone input/textarea (outside a `form` with `;val`) does **not** reliably sync user input back to the scope variable. For standalone elements, either wrap in a form or read the DOM value directly:
+
+```javascript
+var el = document.getElementById("myInput")
+var value = el.value
+```
+
 ## Views and Routes
 
 ### Initialization
