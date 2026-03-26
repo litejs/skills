@@ -83,7 +83,6 @@ Bindings connect data to DOM. Suffix `!` = execute once, don't update.
 | `;on` | `;on "event", handler` | Attach event listener |
 | `;one` | `;one "event", handler` | One-time event listener |
 | `;is` | `;is value, "a,10=b,20=c"` | Threshold-based class switching |
-| `;md` | `;md text` | Render markdown-like markup |
 | `;d` | `;d text` | Render block-level document markup |
 | `;t` | `;t text` | Render inline markup |
 | `;xlink` | `;xlink "#route"` | SVG namespace href (`xlink:href`) |
@@ -224,7 +223,8 @@ El("div#id.class1.class2[data-x=1]")  // Create element
 | `El.append(parent, child)` | Append, handles slots |
 | `El.render(el)` | Process bindings on element tree |
 | `El.scope(el, parent)` | Get/create scope for element |
-| `El.cls(el, name, add)` | Add/remove/toggle class |
+| `El.cls(el, name, add, sel, delay)` | Add/remove/toggle class (optional auto-revert after delay ms) |
+| `El.flip(el, sel, fn, opts)` | FLIP animation (snapshot, mutate, animate) |
 | `El.get(el, attr)` | Get attribute |
 | `El.val(el, val)` | Get/set form value (handles nested forms, selects, checkboxes) |
 | `El.kill(el, transition)` | Remove element (with optional CSS transition) |
@@ -303,6 +303,41 @@ Built-in gesture recognition via event system:
 | `tap` | Quick touch |
 | `hold` | Long press |
 
+**Event properties on pan/hold events:**
+
+| Property | Contains |
+|----------|----------|
+| `e.el` | The element that initiated the gesture |
+| `e.mode` | Gesture mode (`"pan"` or `"hold"`) — set on `panstart`/`holdstart` event object |
+| `e.x0`, `e.y0` | Pointer start position (clientX/Y at pointerdown) |
+| `e.dx`, `e.dy` | Delta from start |
+| `e.ex`, `e.ey` | Current position offset (dx + element's CSS left/top) |
+
+## El.flip — FLIP Animations
+
+`El.flip(el, sel, fn, opts)` — Animate DOM mutations using the FLIP technique.
+
+```javascript
+// Snapshot positions, mutate DOM, animate the difference
+El.flip(container, ".item", function() {
+    container.appendChild(someItem)
+})
+
+// Snapshot only (no animation) — returns position array
+var positions = El.flip(container, ".item")
+```
+
+**Options:**
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `anim` | `"anim"` | CSS class for transition |
+| `enter` | `"op0"` | CSS class for entering elements |
+| `leave` | `"op0"` | CSS class/style for leaving elements |
+| `skip` | — | Element to exclude from move animation |
+
+**Returns:** Flat array of `[el, rect, el, rect, ...]` pairs.
+
 ## CSS Framework
 
 Modular CSS in `css/` directory. Key files:
@@ -363,6 +398,7 @@ xhr.json = function(str, url) {
 | `Modal` | `el/dialog.ui` | Overlay container with blur effect |
 | `Form-*` | `el/form.ui` | Form field elements (text, boolean, enum, list, array) |
 | `Slider` | `el/Slider.ui` | Range slider |
+| `Sortable` | `el/sortable.ui` | Drag-to-reorder list using El.flip |
 | `Pie` | `el/Pie.tpl` | SVG pie chart |
 | `Segment7` | `el/Segment7.tpl` | 7-segment display |
 
@@ -384,6 +420,31 @@ binding/        Extra bindings (persist.js, svg.js)
 css/            Modular stylesheets
 bin/            CLI tools (lj-extract-lang)
 ```
+
+## Markup Syntax (`;t` and `;d` bindings)
+
+Inline markup (`_;t`) and block markup (`;d`) use bracket-based syntax:
+
+**Inline formatting:** `[op content op]` — e.g., `[*bold*]`, `[/italic/]`, `[-deleted-]`, `[_underline_]`, `[`code`]`, `[^super^]`, `[,sub,]`, `[:mark:]`, `[;span;]`, `[~strike~]`, `[+inserted+]`
+
+**Links:** `[text <url>]` or `[<url>]` — e.g., `[Click here <https://example.com>]`
+
+**Images:** `[alt !src!]` or `[!src!]` — e.g., `[sunset !photo.jpg!.right]`
+
+**Embeds:** `[!protocol:id!]` — e.g., `[!youtube:dQw4w9!]`. Register handlers via `El.$b.d.embed`:
+```javascript
+El.$b.d.embed.youtube = function(id, text, extra) {
+    return "<iframe src=\"https://youtube.com/embed/" + id + "\"" + extra + "></iframe>"
+}
+```
+
+**Abbreviations:** `[Full Name ?ABBR?]` defines, `[?ABBR?]` reuses — e.g., `[HyperText Markup Language ?HTML?]`
+
+**Time:** `[@2024-07-12@]` or `[label @2024-07-12@]`
+
+**CSS classes:** Append `.class` — e.g., `[*bold*.red]`, `[<url>.tip]`
+
+**Block markup (`;d` only):** Headings `= text` / `== text`, lists ` - item`, ordered lists ` 1. item`, blockquotes `> text`, `---` for `<hr>`.
 
 ## Common Patterns
 
@@ -454,9 +515,9 @@ main
             a ;txt row.title;href!row.link
 ```
 
-**Inline markup (`;t` binding, from test/html/simplest.html):**
+**Inline markup (`;t` binding):**
 ```
-dd ;t 'Contribute on [!GitHub https://github.com/litejs/!].'
+dd ;t 'Contribute on [[*GitHub*] <https://github.com/litejs/>].'
 ```
 
 **Full SVG SPA (from test/html/svg-spa.html):**

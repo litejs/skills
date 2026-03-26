@@ -22,7 +22,7 @@ lj r [version]          # shorthand
 3. `lj lint`
 4. `npm outdated` (local deps)
 5. `npm outdated -g` (global deps, if configured)
-6. Bump version in package.json (date-based `YY.MM.0` or increment last segment)
+6. Bump version in configured files (date-based `YY.MM.0` or increment last segment)
 7. Verify git tag `v<version>` does not exist
 8. `lj build`
 9. `lj test --brief test/index.js`
@@ -43,8 +43,31 @@ lj r [version]          # shorthand
 | `--no-upstream` | upstream | Skip upstream check |
 | `--no-global` | global="" | Skip global outdated check |
 | `--rewrite` | false | Amend the last release tag instead of creating new |
+| `--set-version` | `["package.json#version"]` | Files to update version in. `file#path` notation, supports JSON (dot path) and TOML (`[section].key`) |
 
 Options can also be set in `package.json#litejs` or `.github/litejs.json`.
+
+## Version Files
+
+By default, only `package.json#version` is updated. Use `--set-version` to update additional files:
+
+```sh
+lj r --set-version="package.json#version" --set-version="tree-sitter.toml#package.version"
+```
+
+Or in `.github/litejs.json`:
+
+```json
+{
+  "release": {
+    "setVersion": ["package.json#version", "tree-sitter.toml#package.version"]
+  }
+}
+```
+
+Supported formats:
+- **JSON** — dot-separated path: `manifest.json#metadata.version`
+- **TOML** — section + key: `config.toml#package.version` matches `version` under `[package]`
 
 ## Version Bumping
 
