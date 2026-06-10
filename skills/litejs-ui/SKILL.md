@@ -45,7 +45,7 @@ Becomes `<h1>My list</h1><ul class="green star"><li><a href="#a">Item A</a></li>
 | `%svg name` | `%svg icon` | Define SVG custom element (alias for `%el`) |
 | `%start` | `%start` | Trigger app initialization (start routing) |
 
-**View names:** Starting with `#` = container without own route (structural only).
+**View names:** A leading `#` (e.g. `#public`, `#login`) makes a view a **non-routable structural container** — used as a parent / `%slot` host, or shown programmatically (`app.show("#login")` / `$ui("#login").show()`), but **not reachable via an `href`**. Routable views have **no** leading `#`; `href="#home"` navigates to the route `home` (the `#` is the URL fragment marker, not part of the view name — so `href="#login"` does *not* reach a view named `#login`).
 **Custom elements:** After `%el Dialog`, use `Dialog` as a selector in templates.
 
 ### Loading Templates
@@ -172,6 +172,11 @@ p Welcome
 p User {params.userId}
 ```
 
+`#public` is a structural container (no route, hosts `%slot`); `home` and
+`user/{userId}` are routable. `a[href="#home"]` navigates to the route `home`.
+A `#`-prefixed view has no href route — reach it with `app.show("#name")` /
+`$ui("#name").show()`, or nest routable children under it.
+
 In JavaScript:
 ```javascript
 app.def("route file.js,file.css\nuser/{id} user.js")
@@ -223,7 +228,7 @@ El("div#id.class1.class2[data-x=1]")  // Create element
 | `El.append(parent, child)` | Append, handles slots |
 | `El.render(el)` | Process bindings on element tree |
 | `El.scope(el, parent)` | Get/create scope for element |
-| `El.cls(el, name, add, sel, delay)` | Add/remove/toggle class (optional auto-revert after delay ms) |
+| `El.cls(el, name, add, sel, delay)` | Add/remove/toggle class (transfer mode: `add` as DOM element removes class from that element and adds to `el`; auto-revert after `delay` ms) |
 | `El.flip(el, sel, fn, opts)` | FLIP animation (snapshot, mutate, animate) |
 | `El.get(el, attr)` | Get attribute |
 | `El.val(el, val)` | Get/set form value (handles nested forms, selects, checkboxes) |
