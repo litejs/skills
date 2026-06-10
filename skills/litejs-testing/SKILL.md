@@ -73,6 +73,8 @@ All chainable, return `assert`. The assert param is itself callable: `assert(val
 | `throws(fn)` | fn must throw |
 | `type(value, name)` | `describe.type(value) === name` |
 | `anyOf(value, array)` | value in array |
+| `has` / `hasNot` | aliases of `own` / `notOwn` |
+| `skip(...)` | no-op, keeps the chain |
 
 **Control:** `assert.end()`, `assert.plan(n)`, `assert.setTimeout(ms)`
 
@@ -94,7 +96,10 @@ describe("env {0}", [["dev"], ["prod"]], function(env) {
 })
 ```
 
-`{0}`, `{1}` in name are replaced from each row. Data args come before `assert, mock` params.
+`{0}`, `{1}` in name are replaced from each row; `{0.key}` reads a property of a row item.
+Data args come before `assert, mock` params. A non-array row is wrapped: `[1, 2]` equals `[[1], [2]]`.
+All rows must have the same length, and the test fn may declare at most row length + 2
+parameters (`assert`, `mock`) — otherwise the runner throws `Invalid data for: <name>`.
 
 ## Mock
 
@@ -120,12 +125,16 @@ spy.errors    // error count
 spy.results   // [returnVal, ...]
 ```
 
+A wrapped function's throw is caught, not rethrown: the call records `error`,
+`spy.errors` increments, and the spy returns `undefined` (a rejected Promise with `behavior: true`).
+
 ### mock.spy / mock.swap
 
 ```js
 mock.spy(obj, "method")             // wrap with spy
 mock.spy(obj, "method", stubFn)     // replace with spy
-mock.swap(obj, "key", newValue)     // replace value
+// spy() returns nothing — read stats from the swapped member: obj.method.called
+mock.swap(obj, "key", newValue)     // replace value, returns the previous value
 mock.swap(obj, {a: 1, b: 2})        // replace multiple
 mock.restore()                      // manual restore (auto on end)
 ```
